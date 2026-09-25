@@ -1,15 +1,25 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { MonitoringStation, SensorDevice, AqiCategory } from "@/types/aqi";
+import {
+  MonitoringStation,
+  SensorDevice,
+  AqiCategory,
+  DispersionModel,
+  IspuOfficialAdvisory,
+} from "@/types/aqi";
 
 interface AqiContextType {
   stations: MonitoringStation[];
   sensors: SensorDevice[];
   selectedStation: MonitoringStation;
+  dispersion: DispersionModel;
+  advisory: IspuOfficialAdvisory;
   setSelectedStation: (station: MonitoringStation) => void;
   updateStationPollution: (stationId: string, pm25: number, pm10: number) => void;
+  updateDispersionParam: (param: Partial<DispersionModel>) => void;
   calibrateSensor: (sensorId: string) => void;
+  updateAdvisory: (newAdv: Partial<IspuOfficialAdvisory>) => void;
   resetAllData: () => void;
 }
 
@@ -33,7 +43,7 @@ const INITIAL_STATIONS: MonitoringStation[] = [
     humidityPct: 68,
     windSpeedKmh: 12.5,
     windDirectionDeg: 45,
-    lastUpdated: "20:50 WIB",
+    lastUpdated: "21:05 WIB",
   },
   {
     id: "STN-JKT-02",
@@ -54,7 +64,7 @@ const INITIAL_STATIONS: MonitoringStation[] = [
     humidityPct: 72,
     windSpeedKmh: 16.0,
     windDirectionDeg: 60,
-    lastUpdated: "20:50 WIB",
+    lastUpdated: "21:05 WIB",
   },
   {
     id: "STN-JKT-03",
@@ -75,7 +85,7 @@ const INITIAL_STATIONS: MonitoringStation[] = [
     humidityPct: 64,
     windSpeedKmh: 9.4,
     windDirectionDeg: 30,
-    lastUpdated: "20:50 WIB",
+    lastUpdated: "21:05 WIB",
   },
   {
     id: "STN-JKT-04",
@@ -96,7 +106,7 @@ const INITIAL_STATIONS: MonitoringStation[] = [
     humidityPct: 66,
     windSpeedKmh: 8.2,
     windDirectionDeg: 90,
-    lastUpdated: "20:50 WIB",
+    lastUpdated: "21:05 WIB",
   },
   {
     id: "STN-JKT-05",
@@ -117,7 +127,7 @@ const INITIAL_STATIONS: MonitoringStation[] = [
     humidityPct: 76,
     windSpeedKmh: 6.5,
     windDirectionDeg: 120,
-    lastUpdated: "20:50 WIB",
+    lastUpdated: "21:05 WIB",
   },
 ];
 
@@ -163,12 +173,42 @@ const INITIAL_SENSORS: SensorDevice[] = [
   },
 ];
 
+const INITIAL_DISPERSION: DispersionModel = {
+  stackHeightM: 80,
+  emissionRateGs: 120,
+  windSpeedMs: 4.5,
+  stabilityClass: "C_SLIGHTLY_UNSTABLE",
+  ambientTempC: 31.0,
+  downwindMaxConcUgM3: 54.2,
+  peakDistanceKm: 2.4,
+};
+
+const INITIAL_ADVISORY: IspuOfficialAdvisory = {
+  reportNo: "ISPU/KLHK-BPPK/2026/09-0891",
+  date: "25 September 2026",
+  reportingPeriod: "Periode Harian Pukul 15:00 - 21:00 WIB",
+  stationCode: "SPKU-BDN",
+  stationName: "Stasiun Pemantau Kualitas Udara Bundaran HI Jakarta Pusat",
+  criticalParameter: "PM2.5 (Partikulat Halus)",
+  ispuValue: 114,
+  category: "TIDAK_SEHAT",
+  healthImpactSummary:
+    "Kualitas udara bersifat merugikan pada kelompok rentan (anak-anak, ibu hamil, lansia, penderita penyakit kardiovaskular dan paru obstruktif menahun).",
+  preventiveAction:
+    "Gunakan masker filtrasi respiratori minimal N95 saat beraktivitas luar ruang. Nyalakan pemurni udara (Air Purifier HEPA) dalam ruangan tertutup dan hindari olahraga berat di jalan arteri.",
+  analystName: "Budi Santoso, S.Si (Analis Kualitas Lingkungan)",
+  stationHeadName: "Ir. Maya Anggraeni, M.Env (Kepala Balai SPKU Jabodetabek)",
+  klhkDirectorName: "Dr. Ir. Sigit Reliantoro, M.Sc (Dirjen Pengendalian Pencemaran KLHK)",
+};
+
 const AqiContext = createContext<AqiContextType | undefined>(undefined);
 
 export function AqiProvider({ children }: { children: React.ReactNode }) {
   const [stations, setStations] = useState<MonitoringStation[]>(INITIAL_STATIONS);
   const [sensors, setSensors] = useState<SensorDevice[]>(INITIAL_SENSORS);
   const [selectedStation, setSelectedStation] = useState<MonitoringStation>(INITIAL_STATIONS[0]);
+  const [dispersion, setDispersion] = useState<DispersionModel>(INITIAL_DISPERSION);
+  const [advisory, setAdvisory] = useState<IspuOfficialAdvisory>(INITIAL_ADVISORY);
 
   useEffect(() => {
     try {
@@ -176,6 +216,10 @@ export function AqiProvider({ children }: { children: React.ReactNode }) {
       if (savedStn) setStations(JSON.parse(savedStn));
       const savedSens = localStorage.getItem("aeroatmos_sensors");
       if (savedSens) setSensors(JSON.parse(savedSens));
+      const savedDisp = localStorage.getItem("aeroatmos_dispersion");
+      if (savedDisp) setDispersion(JSON.parse(savedDisp));
+      const savedAdv = localStorage.getItem("aeroatmos_advisory");
+      if (savedAdv) setAdvisory(JSON.parse(savedAdv));
     } catch (e) {
       console.error("Failed to load localstorage:", e);
     }
@@ -185,10 +229,12 @@ export function AqiProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem("aeroatmos_stations", JSON.stringify(stations));
       localStorage.setItem("aeroatmos_sensors", JSON.stringify(sensors));
+      localStorage.setItem("aeroatmos_dispersion", JSON.stringify(dispersion));
+      localStorage.setItem("aeroatmos_advisory", JSON.stringify(advisory));
     } catch (e) {
       console.error("Failed to save localstorage:", e);
     }
-  }, [stations, sensors]);
+  }, [stations, sensors, dispersion, advisory]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -239,6 +285,23 @@ export function AqiProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateDispersionParam = (param: Partial<DispersionModel>) => {
+    setDispersion((prev) => {
+      const updated = { ...prev, ...param };
+      const u = Math.max(1.0, updated.windSpeedMs);
+      const H = updated.stackHeightM;
+      const Q = updated.emissionRateGs;
+      const conc = Number(((Q * 1000) / (2.718 * 3.1415 * u * (H * 0.4))).toFixed(1));
+      const peakDist = Number((H * 0.03 * (u / 2)).toFixed(1));
+
+      return {
+        ...updated,
+        downwindMaxConcUgM3: Math.max(12, conc),
+        peakDistanceKm: Math.max(0.8, peakDist),
+      };
+    });
+  };
+
   const calibrateSensor = (sensorId: string) => {
     setSensors((prev) =>
       prev.map((sens) =>
@@ -254,12 +317,20 @@ export function AqiProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateAdvisory = (newAdv: Partial<IspuOfficialAdvisory>) => {
+    setAdvisory((prev) => ({ ...prev, ...newAdv }));
+  };
+
   const resetAllData = () => {
     setStations(INITIAL_STATIONS);
     setSensors(INITIAL_SENSORS);
+    setDispersion(INITIAL_DISPERSION);
+    setAdvisory(INITIAL_ADVISORY);
     setSelectedStation(INITIAL_STATIONS[0]);
     localStorage.removeItem("aeroatmos_stations");
     localStorage.removeItem("aeroatmos_sensors");
+    localStorage.removeItem("aeroatmos_dispersion");
+    localStorage.removeItem("aeroatmos_advisory");
   };
 
   return (
@@ -268,9 +339,13 @@ export function AqiProvider({ children }: { children: React.ReactNode }) {
         stations,
         sensors,
         selectedStation,
+        dispersion,
+        advisory,
         setSelectedStation,
         updateStationPollution,
+        updateDispersionParam,
         calibrateSensor,
+        updateAdvisory,
         resetAllData,
       }}
     >

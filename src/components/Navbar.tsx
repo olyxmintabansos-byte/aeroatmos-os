@@ -8,9 +8,9 @@ import {
   CloudSun,
   Activity,
   Sliders,
-  RotateCcw,
-  Sparkles,
   Wind,
+  FileCheck2,
+  RotateCcw,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -18,8 +18,10 @@ export default function Navbar() {
   const { selectedStation, resetAllData } = useAqi();
 
   const navLinks = [
-    { href: "/", label: "AMBIENT AQI SCADA", icon: CloudSun },
-    { href: "/sensor", label: "BAM-1020 SENSORS", icon: Sliders },
+    { href: "/", label: "AMBIENT AQI", icon: CloudSun },
+    { href: "/sensor/", label: "BAM-1020 SENSORS", icon: Sliders },
+    { href: "/dispersion/", label: "GAUSSIAN PLUME", icon: Wind },
+    { href: "/ispu/", label: "KLHK ISPU A4", icon: FileCheck2 },
   ];
 
   return (
@@ -46,10 +48,10 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-3 text-xs">
+        <div className="hidden xl:flex items-center gap-3 text-xs">
           <div className="bg-white/80 border border-sky-200/60 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-            <span className="text-slate-600 font-medium">STASIUN AKTIF:</span>
+            <span className="text-slate-600 font-medium">STASIUN:</span>
             <span className="font-bold text-sky-800">{selectedStation.name}</span>
             <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
               ISPU: {selectedStation.ispuScore}
@@ -63,7 +65,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -71,7 +73,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   isActive
                     ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
                     : "text-slate-600 hover:text-sky-700 hover:bg-sky-50"

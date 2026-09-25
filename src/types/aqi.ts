@@ -40,3 +40,31 @@ export interface SensorDevice {
   opticalLaserStatus: "OPTIMAL" | "ATTENUATED" | "FAULT";
   lastCalibrationDate: string;
 }
+
+export type PasquillStabilityClass = "A_VERY_UNSTABLE" | "B_UNSTABLE" | "C_SLIGHTLY_UNSTABLE" | "D_NEUTRAL" | "E_SLIGHTLY_STABLE" | "F_STABLE";
+
+export interface DispersionModel {
+  stackHeightM: number;
+  emissionRateGs: number;
+  windSpeedMs: number;
+  stabilityClass: PasquillStabilityClass;
+  ambientTempC: number;
+  downwindMaxConcUgM3: number;
+  peakDistanceKm: number;
+}
+
+export interface IspuOfficialAdvisory {
+  reportNo: string;
+  date: string;
+  reportingPeriod: string;
+  stationCode: string;
+  stationName: string;
+  criticalParameter: string;
+  ispuValue: number;
+  category: AqiCategory;
+  healthImpactSummary: string;
+  preventiveAction: string;
+  analystName: string;
+  stationHeadName: string;
+  klhkDirectorName: string;
+}
